@@ -30,6 +30,62 @@ title('Projected depth with image colors');
 cameratoolbar;
 
 figure;
-pcshow(xyz, imgResult);
+%pcshow(xyz, imgResult); %This was before adding the legend
+
+[cmap, lbl] = get_std2p_colormap_and_labels();
+cmap = cmap / 256; % Colormap can use only doubles as input
+
+xyz2 = to3d(double(imgDepth), K);
+%mypcshow(xyz, imgResult);
+%scatter3(x,y,z, 'CData', imgResult, 'UserData',
+%scatter3(xyz2(:,1),xyz2(:,2),xyz2(:,3));
+
+% Row-wise reshaping
+
+%The general way to reshape an m*n matrix A to a p*k matrix B in a row-wise manner is:
+
+%c=reshape(A',1,m*n) 
+%B=reshape(c,k,p)' 
+%example: m=3 n=4 , p=6, q=2
+
+tempR = imgResult(:,:,1); 
+tempG = imgResult(:,:,2);
+tempB = imgResult(:,:,3);
+
+temp = reshape(tempR', 1, size(imgResult, 1) * size(imgResult, 2));
+adjTempR = reshape(temp, [size(imgResult, 1) * size(imgResult, 2), 1])';
+temp = reshape(tempG', 1, size(imgResult, 1) * size(imgResult, 2));
+adjTempG = reshape(temp, [size(imgResult, 1) * size(imgResult, 2), 1])';
+temp = reshape(tempB', 1, size(imgResult, 1) * size(imgResult, 2));
+adjTempB = reshape(temp, [size(imgResult, 1) * size(imgResult, 2), 1])';
+
+adjImgResult = uint8(zeros(size(imgResult, 1) * size(imgResult, 2), size(imgResult, 3)));
+adjImgResult(:,1) = adjTempR;
+adjImgResult(:,2) = adjTempG;
+adjImgResult(:,3) = adjTempB;
+
+unqAdjResult = unique(double(adjImgResult) / 256, 'rows');
+
+scatter3(xyz2(:,1),xyz2(:,2),xyz2(:,3), 'CData', adjImgResult);
+
+% Add only the colors that exist in the current STD2P result
+curColor = 1;
+adjCmap = zeros(size(unqAdjResult, 1), 3);
+for ii = 1:size(cmap,1)
+    if (ismember(cmap(ii,:), unqAdjResult(:,:), 'rows')) 
+      adjCmap(curColor,:) = cmap(ii,:);
+      adjLbl{curColor} = lbl{ii};
+      curColor = curColor + 1;
+    end
+end
+
+colormap(adjCmap);
+
+% Add only the colors that exist in the current STD2P result
+for ii = 1:size(adjCmap,1)
+    p(ii) = patch(NaN, NaN, adjCmap(ii,:));
+end
+
+legend(p, adjLbl);
 title('Projected depth with STD2P output');
 cameratoolbar;
