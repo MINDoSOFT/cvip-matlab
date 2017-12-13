@@ -10,10 +10,17 @@ K = [fx_d 0 cx_d; 0 fy_d cy_d; 0 0 1];
 %imgRgb = imread('../data/01930_color.png');
 %imgRawDepth = imread('../data/01930_raw_depth.png');
 
-imgDepth = imread('../data/00151_depth_filled.png');
-imgRgb = imread('../data/00151_color.png');
-imgRawDepth = imread('../data/00151_raw_depth.png');
-imgResult = imread('../data/00151_result.png');
+%imgDepth = imread('../data/00151_depth_filled.png');
+%imgRgb = imread('../data/00151_color.png');
+%imgRawDepth = imread('../data/00151_raw_depth.png');
+%imgResult = imread('../data/00151_result.png');
+
+imgDepth = imread('../data/02080_depth_filled.png');
+imgRgb = imread('../data/02080_color.png');
+imgRawDepth = imread('../data/02080_raw_depth.png');
+imgResult = imread('../data/02080_result.png');
+
+nyud2_40_classes = getfield(load('../data/02080_score.mat', 'pixelClasses'), 'pixelClasses');
 
 figure;
 imshow(imgRgb);
@@ -66,7 +73,10 @@ adjImgResult(:,3) = adjTempB;
 
 unqAdjResult = unique(double(adjImgResult) / 256, 'rows');
 
-scatter3(xyz2(:,1),xyz2(:,2),xyz2(:,3), 'CData', adjImgResult);
+temp = reshape(nyud2_40_classes', 1, size(imgResult, 1) * size(imgResult, 2));
+adjNyud2_40_classes = reshape(temp, [size(imgResult, 1) * size(imgResult, 2), 1]);
+
+scatter3(xyz2(:,1),xyz2(:,2),xyz2(:,3), 'CData', adjImgResult, 'UserData', adjNyud2_40_classes);
 
 % Add only the colors that exist in the current STD2P result
 curColor = 1;
@@ -89,3 +99,15 @@ end
 legend(p, adjLbl);
 title('Projected depth with STD2P output');
 cameratoolbar;
+
+figure;
+imshow(imgResult);
+colormap(adjCmap);
+
+% Add only the colors that exist in the current STD2P result
+for ii = 1:size(adjCmap,1)
+    p(ii) = patch(NaN, NaN, adjCmap(ii,:));
+end
+
+legend(p, adjLbl);
+title('STD2P Result image');

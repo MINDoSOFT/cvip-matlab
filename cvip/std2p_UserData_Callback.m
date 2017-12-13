@@ -21,15 +21,11 @@ zIdx = find(event_obj.Target.ZData == pos(3));
 idx = intersect(intersect(xIdx,yIdx),zIdx);
 
 [cmap, lbl] = get_std2p_colormap_and_labels();
-cmap = cmap / 256; % Colormap can use only doubles as input
+%cmap = cmap / 256; % Colormap can use only doubles as input
 
 value = 'ERROR';
-for ii = 1:size(cmap,1)
-    if (cmap(ii,:) == event_obj.Target.CData(idx, :)) 
-        value = lbl{ii};
-    end
-end
-    
+value = lbl{event_obj.Target.UserData(idx) + 1} % 1 starting index
+
 %value = event_obj.Target.CData(idx(1)); 
 % add to the data cursor text
 output_txt{end+1} = sprintf('Class: %s', value);
