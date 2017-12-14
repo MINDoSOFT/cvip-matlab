@@ -27,6 +27,7 @@ result2DWithLegendPng = [outputDir frameStr '_result2D_with_legend.png'];
 result2DWithLegendFig = [outputDir frameStr '_result2D_with_legend.fig']
 result3DPCShowWithLegendFig = [outputDir frameStr '_result3DPCShow_with_legend.fig']
 result3DScatter3WithLegendFig = [outputDir frameStr '_result3DScatter3_with_legend.fig']
+result2DWithLegendOverlayPng = [outputDir frameStr '_result2D_with_legend_overlay.png'];
 
 figure;
 imshow(imgRgb);
@@ -141,3 +142,24 @@ if (saveFigures)
    saveas(gcf, result2DWithLegendPng);
    saveas(gcf, result2DWithLegendFig);
 end
+
+figure;
+imshow(imgRgb);
+hold on;
+h = imagesc( imgResult ); % show the edge image
+set( h, 'AlphaData', .5 ); % .5 transparency
+hold off;
+colormap(adjCmap);
+
+% Add only the colors that exist in the current STD2P result
+for ii = 1:size(adjCmap,1)
+    p(ii) = patch(NaN, NaN, adjCmap(ii,:));
+end
+
+legend(p, adjLbl);
+title('STD2P Result image');
+
+if (saveFigures) 
+   saveas(gcf, result2DWithLegendOverlayPng);
+end
+
