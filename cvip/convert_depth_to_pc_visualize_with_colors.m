@@ -10,17 +10,23 @@ K = [fx_d 0 cx_d; 0 fy_d cy_d; 0 0 1];
 %imgRgb = imread('../data/01930_color.png');
 %imgRawDepth = imread('../data/01930_raw_depth.png');
 
-%imgDepth = imread('../data/00151_depth_filled.png');
-%imgRgb = imread('../data/00151_color.png');
-%imgRawDepth = imread('../data/00151_raw_depth.png');
-%imgResult = imread('../data/00151_result.png');
+saveFigures = false; % Enable to save the figures in outputDir
+inputDir = ['..' filesep 'data' filesep 'input' filesep];
+outputDir = ['..' filesep 'data' filesep 'output' filesep];
 
-imgDepth = imread('../data/02080_depth_filled.png');
-imgRgb = imread('../data/02080_color.png');
-imgRawDepth = imread('../data/02080_raw_depth.png');
-imgResult = imread('../data/02080_result.png');
+frame = 151; % 151 for home_office_0001, 2080 for dining_room_0036
+frameStr = sprintf('%05d', frame);
 
-nyud2_40_classes = getfield(load('../data/02080_score.mat', 'pixelClasses'), 'pixelClasses');
+imgDepth = imread([inputDir frameStr '_depth_filled.png']);
+imgRgb = imread([inputDir frameStr '_color.png']);
+imgRawDepth = imread([inputDir frameStr '_raw_depth.png']);
+imgResult = imread([inputDir frameStr '_result.png']);
+nyud2_40_classes = getfield(load([inputDir frameStr '_score.mat'], 'pixelClasses'), 'pixelClasses');
+
+result2DWithLegendPng = [outputDir frameStr '_result2D_with_legend.png'];
+result2DWithLegendFig = [outputDir frameStr '_result2D_with_legend.fig']
+result3DPCShowWithLegendFig = [outputDir frameStr '_result3DPCShow_with_legend.fig']
+result3DScatter3WithLegendFig = [outputDir frameStr '_result3DScatter3_with_legend.fig']
 
 figure;
 imshow(imgRgb);
@@ -37,7 +43,6 @@ title('Projected depth with image colors');
 cameratoolbar;
 
 figure;
-%pcshow(xyz, imgResult); %This was before adding the legend
 
 [cmap, lbl] = get_std2p_colormap_and_labels();
 cmap = cmap / 256; % Colormap can use only doubles as input
@@ -100,6 +105,26 @@ legend(p, adjLbl);
 title('Projected depth with STD2P output');
 cameratoolbar;
 
+if (saveFigures) 
+   saveas(gcf, result3DScatter3WithLegendFig);
+end
+
+figure;
+pcshow(xyz, imgResult); %This was before adding the legend
+colormap(adjCmap);
+
+% Add only the colors that exist in the current STD2P result
+for ii = 1:size(adjCmap,1)
+    p(ii) = patch(NaN, NaN, adjCmap(ii,:));
+end
+
+legend(p, adjLbl);
+title('Projected depth with STD2P output');
+
+if (saveFigures) 
+   saveas(gcf, result3DPCShowWithLegendFig);
+end
+
 figure;
 imshow(imgResult);
 colormap(adjCmap);
@@ -111,3 +136,8 @@ end
 
 legend(p, adjLbl);
 title('STD2P Result image');
+
+if (saveFigures) 
+   saveas(gcf, result2DWithLegendPng);
+   saveas(gcf, result2DWithLegendFig);
+end
