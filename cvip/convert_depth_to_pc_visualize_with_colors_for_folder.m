@@ -6,6 +6,7 @@ cy_d = 2.3844389626620386e+02;
 
 K = [fx_d 0 cx_d; 0 fy_d cy_d; 0 0 1];
 
+savePLY = true; % Enable to save a PLY file of the point cloud
 saveFigures = true; % Enable to save the figures in outputDir
 %inputDir = ['..' filesep 'data' filesep 'input' filesep];
 %inputDir2 = ['..' filesep 'data' filesep 'input2' filesep];
@@ -25,6 +26,7 @@ result2DWithLegendFig = [outputDir filesep frameStr '_result2D_with_legend.fig']
 result3DPCShowWithLegendFig = [outputDir filesep frameStr '_result3DPCShow_with_legend.fig']
 result3DScatter3WithLegendFig = [outputDir filesep frameStr '_result3DScatter3_with_legend.fig']
 result2DWithLegendOverlayPng = [outputDir filesep frameStr '_result2D_with_legend_overlay.png'];
+result3DPointCloudPLY = [outputDir filesep frameStr '_result3D.ply'];
 
 figure;
 imshow(imgRgb);
@@ -39,6 +41,14 @@ figure;
 pcshow(xyz, imgRgb);
 title('Projected depth with image colors');
 cameratoolbar;
+
+if (savePLY) 
+    % ptCloud = pointCloud(xyz);
+    ptCloud = pointCloud(xyz, 'Color', imgResult);
+    pcwrite(ptCloud, result3DPointCloudPLY);
+end
+
+return;
 
 figure;
 
