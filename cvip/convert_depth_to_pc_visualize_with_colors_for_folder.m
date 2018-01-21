@@ -6,6 +6,7 @@ cy_d = 2.3844389626620386e+02;
 
 K = [fx_d 0 cx_d; 0 fy_d cy_d; 0 0 1];
 
+savePCD = true; % Enable to save a PCD file of the point cloud
 savePLY = true; % Enable to save a PLY file of the point cloud
 saveFigures = true; % Enable to save the figures in outputDir
 %inputDir = ['..' filesep 'data' filesep 'input' filesep];
@@ -19,7 +20,7 @@ frameStr2 = sprintf('%04d', frame);
 imgDepth = imread([inputDir filesep frameStr '_depth_filled.png']);
 imgRgb = imread([inputDir filesep frameStr '_color.png']);
 imgResult = imread([inputDir2 filesep 'result' frameStr2 '.png']);
-nyud2_40_classes = getfield(load([inputDir2 filesep 'score' frameStr2 '.mat'], 'pixelClasses'), 'pixelClasses');
+%nyud2_40_classes = getfield(load([inputDir2 filesep 'score' frameStr2 '.mat'], 'pixelClasses'), 'pixelClasses');
 
 result2DWithLegendPng = [outputDir filesep frameStr '_result2D_with_legend.png'];
 result2DWithLegendFig = [outputDir filesep frameStr '_result2D_with_legend.fig']
@@ -27,6 +28,7 @@ result3DPCShowWithLegendFig = [outputDir filesep frameStr '_result3DPCShow_with_
 result3DScatter3WithLegendFig = [outputDir filesep frameStr '_result3DScatter3_with_legend.fig']
 result2DWithLegendOverlayPng = [outputDir filesep frameStr '_result2D_with_legend_overlay.png'];
 result3DPointCloudPLY = [outputDir filesep frameStr '_result3D.ply'];
+result3DPointCloudPCD = [outputDir filesep frameStr '_result3D.pcd'];
 
 figure;
 imshow(imgRgb);
@@ -46,6 +48,12 @@ if (savePLY)
     % ptCloud = pointCloud(xyz);
     ptCloud = pointCloud(xyz, 'Color', imgResult);
     pcwrite(ptCloud, result3DPointCloudPLY);
+end
+
+if (savePCD) 
+    % ptCloud = pointCloud(xyz);
+    ptCloud = pointCloud(xyz, 'Color', imgResult);
+    pcwrite(ptCloud, result3DPointCloudPCD);
 end
 
 return;
