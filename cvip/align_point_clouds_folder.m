@@ -44,6 +44,7 @@ cameraPoseCSV = importdata(cameraPoseName,delimiterIn,headerlinesIn);
 % and camera pose for each frame
 % generate the aligned point clouds
 for ii = 1 : numel(pointClouds)  
+%for ii = 1 : 1
   if (ii == 1)
     refRotationAndTransformation = get_camera_pose_rotation_and_transformation(cameraPoseCSV, ii);
     refPointCloudName = pointClouds(ii);
@@ -53,8 +54,13 @@ for ii = 1 : numel(pointClouds)
     xyzColors = refPointCloud(:,:,4:6);
     refPointCloudColor = pointCloud(xyz, 'Color', xyzColors);
     pcshow(refPointCloudColor);
+    %xyz2 = reshape(xyz, size(xyz, 1) * size(xyz, 2), 3);
+    %scatter3(xyz2);
+    %scatter3(xyz2(:,1),xyz2(:,2),xyz2(:,3), 'CData', adjImgResult, 'UserData', adjNyud2_40_classes);
+    %scatter3(xyz2(:,1),xyz2(:,2),xyz2(:,3));
     figure;
   else
+      %if ii == 10
     rotationAndTransformation = get_camera_pose_rotation_and_transformation(cameraPoseCSV, ii);
     curPointCloudName = pointClouds(ii);
     % curPointCloud = pcread(strjoin([inputDir filesep curPointCloudName], ''));
@@ -63,11 +69,15 @@ for ii = 1 : numel(pointClouds)
     xyzColors = curPointCloud(:,:,4:6);
     curPointCloudColor = pointCloud(xyz, 'Color', xyzColors);
     alignedPointCloudColor = alignPointCloudToReference(refPointCloudColor, ...
-        refRotationAndTransformation, curPointCloudColor, rotationAndTransformation);
+        refRotationAndTransformation, curPointCloudColor, rotationAndTransformation, ...
+        refPointCloud, curPointCloud);
     pcshow(alignedPointCloudColor);
+    %xyz2 = reshape(xyz, size(xyz, 1) * size(xyz, 2), 3);
+    %scatter3(xyz2(:,1),xyz2(:,2),xyz2(:,3));
     if ~(ii == numel(pointClouds))
       figure;
     end
+      %end
   end
 end
 

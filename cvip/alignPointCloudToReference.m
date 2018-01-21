@@ -1,7 +1,8 @@
 %% Align Two Point Clouds
 % Expects the csv camera pose file
 % And returns the ii'th rotation and transformation matrix
-function alignedPointCloud = alignPointCloudToReference(refPointCloud, refAffineMatrix, curPointCloud, curAffineMatrix)
+function alignedPointCloud = alignPointCloudToReference(refPointCloud, refAffineMatrix, curPointCloud, curAffineMatrix, ...
+    refXYZRGB, curXYZRGB)
   disp(refAffineMatrix);
   disp(curAffineMatrix);
   %alignedPointCloud = curPointCloud;
@@ -12,10 +13,72 @@ function alignedPointCloud = alignPointCloudToReference(refPointCloud, refAffine
   %          5         5 10 1];
   %tform1 = affine3d(A);
   
+  % Do this with matrix multiplications because matlab throws "not a valid
+  % rigid transformation error in pctransform"
+  
+  %refXYZ = refXYZRGB(:,:,1:3);
+  %refXYZColors = refXYZRGB(:,:,4:6);
+    
+  curXYZ = curXYZRGB(:,:,1:3);
+  curXYZColors = curXYZRGB(:,:,4:6);
+  
+  alignMatrix = refAffineMatrix * (curAffineMatrix ^ (-1));
+  % Fix the last column to be zeros everywhere and one at the end
+  alignMatrix(1,4) = 0;
+  alignMatrix(2,4) = 0;
+  alignMatrix(3,4) = 0;
+  alignMatrix(4,4) = 1;
+  
+  % Add one to convert x y z to homogeneous coordinates
+  A = ones(size(curXYZ, 1), size(curXYZ,2));
+  curXYZ_H = cat(3, curXYZ, A);
+  
+  for ii = 1:size(curXYZ_H, 1)
+      for jj = 1:size(curXYZ_H, 2)
+          adj = squeeze(curXYZ_H(ii, jj, :));
+          curXYZ_H(ii, jj, :) = adj' * alignMatrix;
+          % C(:, :, i) = B(i) * A(:, :, i);
+      end
+  end
+  
+  % alignRefXYZ = curXYZ_H(:,:).' * alignMatrix;
+  alignRefXYZ = curXYZ_H;
+  
+  alignRefEucXYZ = zeros(size(curXYZ_H, 1), size(curXYZ_H, 1), 3);
+  
+  % Homogeneous to euclidean coordinates
+  for ii = 1:size(alignRefXYZ, 1)
+      for jj = 1:size(alignRefXYZ, 2)
+          adj = squeeze(alignRefXYZ(ii, jj, :));
+          adj2 = [adj(1)/adj(4) adj(2)/adj(4) adj(3)/adj(4)];
+          alignRefEucXYZ(ii, jj, :) = adj2;
+          % C(:, :, i) = B(i) * A(:, :, i);
+      end
+  end
+  
+  alignedPointCloudColor = pointCloud(alignRefEucXYZ, 'Color', curXYZColors);
+  alignedPointCloud = alignedPointCloudColor;
+  
+  return;
+  
   %C = A * B'
   
-  alignMatrix = refAffineMatrix * curAffineMatrix';
-  disp(alignMatrix);
+  %alignMatrix = refAffineMatrix * curAffineMatrix';
+  %alignMatrix = refAffineMatrix * inv(curAffineMatrix);
+  alignMatrix = refAffineMatrix * (curAffineMatrix ^ (-1));
+  %alignMatrix = refAffineMatrix/curAffineMatrix;
+  
+  % Fix the last column to be zeros everywhere and one at the end
+  alignMatrix(1,4) = 0;
+  alignMatrix(2,4) = 0;
+  alignMatrix(3,4) = 0;
+  alignMatrix(4,4) = 1;
+  
+  disp(alignMatrix); 
+  
+  % Verify Rotation R * R^-1 = I
+  
+  
   
   tformAlign = affine3d(alignMatrix);
   alignedPointCloud = pctransform(curPointCloud,tformAlign);
