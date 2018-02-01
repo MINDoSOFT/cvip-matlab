@@ -6,9 +6,14 @@ cy_d = 2.3844389626620386e+02;
 
 K = [fx_d 0 cx_d; 0 fy_d cy_d; 0 0 1];
 
-savePCD = true; % Enable to save a PCD file of the point cloud
+savePCD = false; % Enable to save a PCD file of the point cloud
 savePLY = true; % Enable to save a PLY file of the point cloud
 saveFigures = true; % Enable to save the figures in outputDir
+bJustConvert = true; % Enable this to just convert from array to PCD and PLY
+bDownsample = false;
+bAdjustNormals = true;
+bScaleDepth = true;
+iScaleFactor = 1000;
 %inputDir = ['..' filesep 'data' filesep 'input' filesep];
 %inputDir2 = ['..' filesep 'data' filesep 'input2' filesep];
 %outputDir = ['..' filesep 'data' filesep 'output' filesep];
@@ -19,7 +24,7 @@ frameStr2 = sprintf('%04d', frame);
 
 imgDepth = imread([inputDir filesep frameStr '_depth_filled.png']);
 imgRgb = imread([inputDir filesep frameStr '_color.png']);
-imgResult = imread([inputDir2 filesep 'result' frameStr2 '.png']);
+%imgResult = imread([inputDir2 filesep 'result' frameStr2 '.png']);
 %nyud2_40_classes = getfield(load([inputDir2 filesep 'score' frameStr2 '.mat'], 'pixelClasses'), 'pixelClasses');
 
 result2DWithLegendPng = [outputDir filesep frameStr '_result2D_with_legend.png'];
@@ -35,6 +40,12 @@ imshow(imgRgb);
 title('RGB image');
 
 figure;
+
+if bScaleDepth
+    imgDepth = double(imgDepth);
+    imgDepth = imgDepth / iScaleFactor;
+end
+    
 xyz = to3d_preserve_size(double(imgDepth), K);
 pcshow(xyz);
 title('Projected depth');
@@ -46,17 +57,28 @@ cameratoolbar;
 
 if (savePLY) 
     % ptCloud = pointCloud(xyz);
-    ptCloud = pointCloud(xyz, 'Color', imgResult);
+    ptCloud = pointCloud(xyz, 'Color', imgRgb);
+    if (bDownsample)
+       %gridSize = 0.1; %Didn't do anything
+       %gridSize = 10; %works good with our kinectsession5_no_rotation_1
+       gridSize = 200; %works good with std2p dining_room_0036
+       ptCloud = pcdownsample(ptCloud, 'gridAverage', gridSize);
+    end
+    if (bAdjustNormals)
+       setNormalsOfPointCloud(ptCloud);
+    end
     pcwrite(ptCloud, result3DPointCloudPLY);
 end
 
 if (savePCD) 
     % ptCloud = pointCloud(xyz);
-    ptCloud = pointCloud(xyz, 'Color', imgResult);
+    ptCloud = pointCloud(xyz, 'Color', imgRgb);
     pcwrite(ptCloud, result3DPointCloudPCD);
 end
 
-return;
+if (bJustConvert)
+    return;
+end
 
 figure;
 

@@ -22,7 +22,23 @@ function alignedPointCloud = alignPointCloudToReference(refPointCloud, refAffine
   curXYZ = curXYZRGB(:,:,1:3);
   curXYZColors = curXYZRGB(:,:,4:6);
   
-  alignMatrix = refAffineMatrix * (curAffineMatrix ^ (-1));
+  % Check if translation in alignMatrix is related to the small rotations
+  % in the curAffineMatrix => Yes
+  curAffineMatrix(1,1) = 1;
+  curAffineMatrix(1,2) = 0;
+  curAffineMatrix(1,3) = 0;
+  curAffineMatrix(2,1) = 0;
+  curAffineMatrix(2,2) = 1;
+  curAffineMatrix(2,3) = 0;
+  curAffineMatrix(3,1) = 0;
+  curAffineMatrix(3,2) = 0;
+  curAffineMatrix(3,3) = 1;
+  
+  %alignMatrix = refAffineMatrix * (curAffineMatrix ^ (-1));
+  alignMatrix = curAffineMatrix ^ (-1) * refAffineMatrix;
+  %alignMatrix = refAffineMatrix ^ (-1) * curAffineMatrix;
+  
+  %alignMatrix = curAffineMatrix * (refAffineMatrix ^ (-1));
   % Fix the last column to be zeros everywhere and one at the end
   alignMatrix(1,4) = 0;
   alignMatrix(2,4) = 0;
@@ -56,7 +72,8 @@ function alignedPointCloud = alignPointCloudToReference(refPointCloud, refAffine
       end
   end
   
-  alignedPointCloudColor = pointCloud(alignRefEucXYZ, 'Color', curXYZColors);
+  %alignedPointCloudColor = pointCloud(alignRefEucXYZ, 'Color', curXYZColors);
+  alignedPointCloudColor = alignRefEucXYZ;
   alignedPointCloud = alignedPointCloudColor;
   
   return;

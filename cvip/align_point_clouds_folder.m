@@ -2,17 +2,22 @@
 % call the align_point_clouds_for_folder
 % adjusting inputDir, inputDir2, outputDir, frame
 
+bJustConvertToPLY = true; % Enable this flag to convert from PCD to PLY files
+
 addpath(['..' filesep '..' filesep 'matpcl']);
 
-sceneName = 'kinectv1_0004';
-%sceneName = 'home_office_0001';
+%sceneName = 'kinectsession5_no_rotation_1';
+%sceneName = 'kinectv1_0004';
+sceneName = 'home_office_0001';
 
 dataDir = ['..' filesep 'data'];
 inputDir = [dataDir filesep 'inputPC' filesep sceneName filesep 'pc'];
 inputDir2 = [dataDir filesep 'inputPC' filesep sceneName filesep 'pose'];
 outputDir = [dataDir filesep 'outputPC' filesep sceneName];
+outputDir2 = [dataDir filesep 'inputPLY' filesep sceneName];
 
 exists_or_mkdir(outputDir);
+exists_or_mkdir(outputDir2);
 
 pointClouds = dir([inputDir filesep '*.pcd']);
 xlsfiles={pointClouds.name};
@@ -43,7 +48,27 @@ cameraPoseCSV = importdata(cameraPoseName,delimiterIn,headerlinesIn);
 % using first frame as the reference point cloud
 % and camera pose for each frame
 % generate the aligned point clouds
+figure;
+cameratoolbar;
+hold on;
 for ii = 1 : numel(pointClouds)  
+    if bJustConvertToPLY
+        % Read the pcd files
+        pointCloudName = pointClouds(ii);
+        inPointCloudFilepath = strjoin([inputDir filesep pointCloudName], '');
+        inPointCloud = loadpcd_v2(inPointCloudFilepath);
+        % Make them a MATLAB point cloud
+        xyz = inPointCloud(:,:,1:3);
+        xyzColors = inPointCloud(:,:,4:6);
+        inPointCloudColor = pointCloud(xyz, 'Color', xyzColors);
+        % Adjust the normals
+        inPointCloudColor = setNormalsOfPointCloud(inPointCloudColor);
+        % Store the result as PLY file
+        [filepath,name,ext] = fileparts(inPointCloudFilepath);
+        outPointCloudFilepath = strjoin([outputDir2 filesep cellstr(strcat(name, '.ply'))], '');
+        pcwrite(inPointCloudColor, outPointCloudFilepath);
+        continue
+    end
 %for ii = 1 : 1
   if (ii == 1)
     refRotationAndTransformation = get_camera_pose_rotation_and_transformation(cameraPoseCSV, ii);
@@ -53,14 +78,14 @@ for ii = 1 : numel(pointClouds)
     xyz = refPointCloud(:,:,1:3);
     xyzColors = refPointCloud(:,:,4:6);
     refPointCloudColor = pointCloud(xyz, 'Color', xyzColors);
-    pcshow(refPointCloudColor);
-    %xyz2 = reshape(xyz, size(xyz, 1) * size(xyz, 2), 3);
+    %pcshow(refPointCloudColor);
+    xyz2 = reshape(xyz, size(xyz, 1) * size(xyz, 2), 3);
     %scatter3(xyz2);
     %scatter3(xyz2(:,1),xyz2(:,2),xyz2(:,3), 'CData', adjImgResult, 'UserData', adjNyud2_40_classes);
-    %scatter3(xyz2(:,1),xyz2(:,2),xyz2(:,3));
-    figure;
+    scatter3(xyz2(:,1),xyz2(:,2),xyz2(:,3),'b','.');
+    %figure;
   else
-      %if ii == 10
+      if ii == 10
     rotationAndTransformation = get_camera_pose_rotation_and_transformation(cameraPoseCSV, ii);
     curPointCloudName = pointClouds(ii);
     % curPointCloud = pcread(strjoin([inputDir filesep curPointCloudName], ''));
@@ -68,17 +93,23 @@ for ii = 1 : numel(pointClouds)
     xyz = curPointCloud(:,:,1:3);
     xyzColors = curPointCloud(:,:,4:6);
     curPointCloudColor = pointCloud(xyz, 'Color', xyzColors);
-    alignedPointCloudColor = alignPointCloudToReference(refPointCloudColor, ...
+    alignedPointCloudColor = alignPointCloudToReferenceV2(refPointCloudColor, ...
         refRotationAndTransformation, curPointCloudColor, rotationAndTransformation, ...
         refPointCloud, curPointCloud);
-    pcshow(alignedPointCloudColor);
-    %xyz2 = reshape(xyz, size(xyz, 1) * size(xyz, 2), 3);
-    %scatter3(xyz2(:,1),xyz2(:,2),xyz2(:,3));
-    if ~(ii == numel(pointClouds))
-      figure;
-    end
-      %end
+    %%%xyz2 = alignedPointCloudColor.Location;
+    xyz = alignedPointCloudColor(:,:,1:3);
+    %xyzColors = alignedPointCloudColor(:,:,4:6);
+    %pcshow(alignedPointCloudColor);
+    xyz2 = reshape(xyz, size(xyz, 1) * size(xyz, 2), 3);
+    scatter3(xyz2(:,1),xyz2(:,2),xyz2(:,3),'g','.');
+    %if ~(ii == numel(pointClouds))
+    %  figure;
+    %end
+    hd = HausdorffDist(refPointCloud(:,:,1:3), xyz);
+      end
   end
 end
+
+hold off;
 
 %close all; 
