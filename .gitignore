@@ -4,3 +4,7 @@
 
 # MacOS
 .DS_Store
+
+data/output*
+*_POSTICP.mat
+
