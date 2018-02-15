@@ -2,13 +2,16 @@
 % call the align_point_clouds_for_folder
 % adjusting inputDir, inputDir2, outputDir, frame
 
-bJustConvertToPLY = true; % Enable this flag to convert from PCD to PLY files
+bJustConvertToPLY = false; % Enable this flag to convert from PCD to PLY files
 
 addpath(['..' filesep '..' filesep 'matpcl']);
 
 %sceneName = 'kinectsession5_no_rotation_1';
 %sceneName = 'kinectv1_0004';
-sceneName = 'home_office_0001';
+%sceneName = 'home_office_0001';
+%sceneName = 'dining_room_0036';
+%sceneName = 'kinectv1_0004_target_frames';
+sceneName = 'kinectv1_0006';
 
 dataDir = ['..' filesep 'data'];
 inputDir = [dataDir filesep 'inputPC' filesep sceneName filesep 'pc'];
@@ -69,7 +72,6 @@ for ii = 1 : numel(pointClouds)
         pcwrite(inPointCloudColor, outPointCloudFilepath);
         continue
     end
-%for ii = 1 : 1
   if (ii == 1)
     refRotationAndTransformation = get_camera_pose_rotation_and_transformation(cameraPoseCSV, ii);
     refPointCloudName = pointClouds(ii);
@@ -78,14 +80,21 @@ for ii = 1 : numel(pointClouds)
     xyz = refPointCloud(:,:,1:3);
     xyzColors = refPointCloud(:,:,4:6);
     refPointCloudColor = pointCloud(xyz, 'Color', xyzColors);
+    
+    % Special case to move the reference point cloud to it's initial
+    % transformation
+    %refPointCloudColor = alignPointCloudToReference(refPointCloudColor, ...
+    %    refRotationAndTransformation, refPointCloudColor, refRotationAndTransformation, ...
+    %    refPointCloud, refPointCloud);
+    
     %pcshow(refPointCloudColor);
     xyz2 = reshape(xyz, size(xyz, 1) * size(xyz, 2), 3);
     %scatter3(xyz2);
     %scatter3(xyz2(:,1),xyz2(:,2),xyz2(:,3), 'CData', adjImgResult, 'UserData', adjNyud2_40_classes);
-    scatter3(xyz2(:,1),xyz2(:,2),xyz2(:,3),'b','.');
+    %%scatter3(xyz2(:,1),xyz2(:,2),xyz2(:,3),'b','.');
     %figure;
   else
-      if ii == 10
+      if ii == 50
     rotationAndTransformation = get_camera_pose_rotation_and_transformation(cameraPoseCSV, ii);
     curPointCloudName = pointClouds(ii);
     % curPointCloud = pcread(strjoin([inputDir filesep curPointCloudName], ''));
@@ -93,22 +102,31 @@ for ii = 1 : numel(pointClouds)
     xyz = curPointCloud(:,:,1:3);
     xyzColors = curPointCloud(:,:,4:6);
     curPointCloudColor = pointCloud(xyz, 'Color', xyzColors);
-    alignedPointCloudColor = alignPointCloudToReferenceV2(refPointCloudColor, ...
+    alignedPointCloudColor = alignPointCloudToReference(refPointCloudColor, ...
         refRotationAndTransformation, curPointCloudColor, rotationAndTransformation, ...
         refPointCloud, curPointCloud);
     %%%xyz2 = alignedPointCloudColor.Location;
-    xyz = alignedPointCloudColor(:,:,1:3);
+    %xyz = alignedPointCloudColor(:,:,1:3);
     %xyzColors = alignedPointCloudColor(:,:,4:6);
+    %alignedPointCloudColor = pointCloud(xyz, 'Color', xyzColors);
     %pcshow(alignedPointCloudColor);
-    xyz2 = reshape(xyz, size(xyz, 1) * size(xyz, 2), 3);
-    scatter3(xyz2(:,1),xyz2(:,2),xyz2(:,3),'g','.');
+    %%xyz2 = reshape(xyz, size(xyz, 1) * size(xyz, 2), 3);
+    %%scatter3(xyz2(:,1),xyz2(:,2),xyz2(:,3),'g','.');
     %if ~(ii == numel(pointClouds))
     %  figure;
     %end
-    hd = HausdorffDist(refPointCloud(:,:,1:3), xyz);
+    %hd = HausdorffDist(refPointCloud(:,:,1:3), xyz);
       end
   end
 end
+
+pcshowpair(refPointCloudColor, curPointCloudColor);
+title('Before align');
+drawnow;
+figure;
+%pcshowpair(refPointCloudColor, alignedPointCloudColor);
+pcshowpair(refPointCloudColor, alignedPointCloudColor);
+title('After align');
 
 hold off;
 

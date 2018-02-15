@@ -22,28 +22,42 @@ function alignedPointCloud = alignPointCloudToReference(refPointCloud, refAffine
   curXYZ = curXYZRGB(:,:,1:3);
   curXYZColors = curXYZRGB(:,:,4:6);
   
-  % Check if translation in alignMatrix is related to the small rotations
-  % in the curAffineMatrix => Yes
-  curAffineMatrix(1,1) = 1;
-  curAffineMatrix(1,2) = 0;
-  curAffineMatrix(1,3) = 0;
-  curAffineMatrix(2,1) = 0;
-  curAffineMatrix(2,2) = 1;
-  curAffineMatrix(2,3) = 0;
-  curAffineMatrix(3,1) = 0;
-  curAffineMatrix(3,2) = 0;
-  curAffineMatrix(3,3) = 1;
+  if isequal(refAffineMatrix, curAffineMatrix)
+      % The case of the reference frame
+      alignMatrix = refAffineMatrix;
+  else
+      % Check if translation in alignMatrix is related to the small rotations
+      % in the curAffineMatrix => Yes
+      %curAffineMatrix(1,1) = 1;
+      %curAffineMatrix(1,2) = 0;
+      %curAffineMatrix(1,3) = 0;
+      %curAffineMatrix(2,1) = 0;
+      %curAffineMatrix(2,2) = 1;
+      %curAffineMatrix(2,3) = 0;
+      %curAffineMatrix(3,1) = 0;
+      %curAffineMatrix(3,2) = 0;
+      %curAffineMatrix(3,3) = 1;
+
+      %alignMatrix = refAffineMatrix * (curAffineMatrix ^ (-1));
+      alignMatrix = curAffineMatrix ^ (-1) * refAffineMatrix; % The correct one
+      %alignMatrix = refAffineMatrix ^ (-1) * curAffineMatrix;
+      %alignMatrix = curAffineMatrix;
+
+      %alignMatrix = curAffineMatrix * (refAffineMatrix ^ (-1));
+      % Fix the last column to be zeros everywhere and one at the end
+      alignMatrix(1,4) = 0;
+      alignMatrix(2,4) = 0;
+      alignMatrix(3,4) = 0;
+      alignMatrix(4,4) = 1;
+  end
   
-  %alignMatrix = refAffineMatrix * (curAffineMatrix ^ (-1));
-  alignMatrix = curAffineMatrix ^ (-1) * refAffineMatrix;
-  %alignMatrix = refAffineMatrix ^ (-1) * curAffineMatrix;
+  iScaleFactor = 1;
+  % Scale the translation 
+  alignMatrix(4,1) = alignMatrix(4,1) * iScaleFactor;
+  alignMatrix(4,2) = alignMatrix(4,2) * iScaleFactor;
+  alignMatrix(4,3) = alignMatrix(4,3) * iScaleFactor;  
   
-  %alignMatrix = curAffineMatrix * (refAffineMatrix ^ (-1));
-  % Fix the last column to be zeros everywhere and one at the end
-  alignMatrix(1,4) = 0;
-  alignMatrix(2,4) = 0;
-  alignMatrix(3,4) = 0;
-  alignMatrix(4,4) = 1;
+  disp(alignMatrix);
   
   % Add one to convert x y z to homogeneous coordinates
   A = ones(size(curXYZ, 1), size(curXYZ,2));
@@ -73,8 +87,8 @@ function alignedPointCloud = alignPointCloudToReference(refPointCloud, refAffine
   end
   
   %alignedPointCloudColor = pointCloud(alignRefEucXYZ, 'Color', curXYZColors);
-  alignedPointCloudColor = alignRefEucXYZ;
-  alignedPointCloud = alignedPointCloudColor;
+  %alignedPointCloudColor = alignRefEucXYZ;
+  alignedPointCloud = pointCloud(alignRefEucXYZ, 'Color', curXYZColors);
   
   return;
   

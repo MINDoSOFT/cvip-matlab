@@ -12,7 +12,7 @@ saveFigures = true; % Enable to save the figures in outputDir
 bJustConvert = true; % Enable this to just convert from array to PCD and PLY
 bDownsample = false;
 bAdjustNormals = true;
-bScaleDepth = true;
+bScaleDepth = false;
 iScaleFactor = 1000;
 %inputDir = ['..' filesep 'data' filesep 'input' filesep];
 %inputDir2 = ['..' filesep 'data' filesep 'input2' filesep];
@@ -22,10 +22,12 @@ iScaleFactor = 1000;
 frameStr = sprintf('%05d', frame);
 frameStr2 = sprintf('%04d', frame);
 
+imgDepthNoise = imread([inputDir filesep frameStr '_depth_noise.png']);
 imgDepth = imread([inputDir filesep frameStr '_depth_filled.png']);
+imgDepthRaw = imread([inputDir filesep frameStr '_depth_raw.png']);
 imgRgb = imread([inputDir filesep frameStr '_color.png']);
-%imgResult = imread([inputDir2 filesep 'result' frameStr2 '.png']);
-%nyud2_40_classes = getfield(load([inputDir2 filesep 'score' frameStr2 '.mat'], 'pixelClasses'), 'pixelClasses');
+imgResult = imread([inputDir2 filesep 'result' frameStr2 '.png']);
+nyud2_40_classes = getfield(load([inputDir2 filesep 'score' frameStr2 '.mat'], 'pixelClasses'), 'pixelClasses');
 
 result2DWithLegendPng = [outputDir filesep frameStr '_result2D_with_legend.png'];
 result2DWithLegendFig = [outputDir filesep frameStr '_result2D_with_legend.fig']
@@ -42,11 +44,13 @@ title('RGB image');
 figure;
 
 if bScaleDepth
-    imgDepth = double(imgDepth);
-    imgDepth = imgDepth / iScaleFactor;
+    imgDepthRaw = double(imgDepthRaw);
+    imgDepthRaw = imgDepthRaw / iScaleFactor;
 end
     
-xyz = to3d_preserve_size(double(imgDepth), K);
+imgDepthRaw = discardNoiseFromDepth(imgDepthRaw, imgDepthNoise);
+
+xyz = to3d_preserve_size(double(imgDepthRaw), K);
 pcshow(xyz);
 title('Projected depth');
 
@@ -85,7 +89,7 @@ figure;
 [cmap, lbl] = get_std2p_colormap_and_labels();
 cmap = cmap / 256; % Colormap can use only doubles as input
 
-xyz2 = to3d(double(imgDepth), K);
+xyz2 = to3d(double(imgDepthRaw), K);
 %mypcshow(xyz, imgResult);
 %scatter3(x,y,z, 'CData', imgResult, 'UserData',
 %scatter3(xyz2(:,1),xyz2(:,2),xyz2(:,3));

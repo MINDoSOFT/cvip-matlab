@@ -2,9 +2,10 @@
 % call the convert_depth_to_pc_visualize_with_colors_for_folder
 % adjusting inputDir, inputDir2, outputDir, frame
 
-%sceneName = 'kinectv1_0004';
+%sceneName = 'kinectv1_0004_v2';
 %sceneName = 'kinectsession5_no_rotation_1';
-sceneName = 'dining_room_0036';
+%sceneName = 'dining_room_0036';
+sceneName = 'kinectv1_0006';
 
 dataDir = ['..' filesep 'data'];
 inputDir = [dataDir filesep 'input' filesep sceneName filesep 'input'];
